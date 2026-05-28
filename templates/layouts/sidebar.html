@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Generator Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+
+  <body class="flex h-screen bg-gray-100">
+    <!-- SIDEBAR -->
+    <div class="w-64 bg-gray-900 text-white flex flex-col">
+      <div class="p-4 text-xl font-bold border-b border-gray-700">Generators Tools</div>
+
+      <nav class="p-4 space-y-2">
+
+        <a href="/txt/" class="block px-4 py-2 hover:bg-gray-700 rounded">
+          Tap File(TXT to Excel)
+        </a>
+
+        <a href="/core/word/" class="block px-4 py-2 hover:bg-gray-700 rounded">
+          Word To PDF
+        </a>
+        
+<a href="/core/excel/" class="block px-4 py-2 hover:bg-gray-700 rounded">
+    Excel To PDF
+</a>
+
+      </nav>
+    </div>
+
+    <!-- CONTENT -->
+
+    <div class="flex-1 flex justify-center items-start p-6 overflow-auto">
+      <div class="w-full max-w-2xl">{% block content %}{% endblock %}</div>
+    </div>
+  </body>
+</html>

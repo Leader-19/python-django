@@ -1,0 +1,26 @@
+{% extends "layouts/sidebar.html" %} {% block content %}
+
+<h2 class="text-2xl font-bold mb-6">Preview Result</h2>
+
+<div class="bg-white p-4 rounded shadow overflow-auto">
+  {% if preview %} {{ preview|safe }} {% else %}
+  <p>No preview available.</p>
+  {% endif %}
+</div>
+
+<!-- BUTTONS -->
+<div class="mt-6 flex gap-4">
+  <!-- EXPORT -->
+
+  <form method="post" action="/export/">
+    {% csrf_token %}
+    <button class="bg-green-600 text-white px-6 py-2 rounded">
+      Export File
+    </button>
+  </form>
+
+  <!-- BACK -->
+  <a href="/txt/" class="bg-gray-500 text-white px-6 py-2 rounded"> Back </a>
+</div>
+
+{% endblock %}
