@@ -14,7 +14,7 @@ SECRET_KEY = 'django-insecure-9yknsk6(l^r79kx5^5#e+s-ip#6q9vh1^18*nlj35-t5&s@$ky
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['python-django-mvbi.onrender.com', 'localhost', '127.0.0.1']
 
 # Application definition
 INSTALLED_APPS = [
@@ -83,7 +83,8 @@ USE_TZ = True
 # Static files
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']  # ✅ ADDED
-STATIC_ROOT = BASE_DIR / 'staticfiles'   # ✅ ADDED
+# STATIC_ROOT = BASE_DIR / 'staticfiles'   # ✅ ADDED
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
