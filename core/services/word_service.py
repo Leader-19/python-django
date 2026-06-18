@@ -1,41 +1,34 @@
 import os
-import pythoncom
-import win32com.client
+import subprocess
 from django.http import HttpResponse
 
 
 def convert_word_to_pdf(file):
-    # IMPORTANT: initialize COM
-    pythoncom.CoInitialize()
+    os.makedirs("media", exist_ok=True)
 
-    try:
-        input_path = os.path.abspath(f"media/{file.name}")
-        output_path = input_path.replace(".docx", ".pdf")
+    input_path = os.path.abspath(f"media/{file.name}")
+    output_dir = os.path.abspath("media")
 
-        # save uploaded file
-        with open(input_path, "wb+") as f:
-            for chunk in file.chunks():
-                f.write(chunk)
+    # save uploaded file
+    with open(input_path, "wb+") as f:
+        for chunk in file.chunks():
+            f.write(chunk)
 
-        # open Word
-        word = win32com.client.DispatchEx("Word.Application")
-        word.Visible = False
+    # convert using LibreOffice (best Linux alternative)
+    subprocess.run([
+        "libreoffice",
+        "--headless",
+        "--convert-to",
+        "pdf",
+        "--outdir",
+        output_dir,
+        input_path
+    ], check=True)
 
-        doc = word.Documents.Open(input_path)
+    output_path = input_path.rsplit(".", 1)[0] + ".pdf"
 
-        # 17 = PDF
-        doc.SaveAs(output_path, FileFormat=17)
+    with open(output_path, "rb") as f:
+        response = HttpResponse(f.read(), content_type="application/pdf")
+        response["Content-Disposition"] = 'attachment; filename="output.pdf"'
 
-        doc.Close()
-        word.Quit()
-
-        # return file
-        with open(output_path, "rb") as f:
-            response = HttpResponse(f.read(), content_type="application/pdf")
-            response["Content-Disposition"] = 'attachment; filename="output.pdf"'
-
-        return response
-
-    finally:
-        # VERY IMPORTANT: clean COM
-        pythoncom.CoUninitialize()
+    return response
