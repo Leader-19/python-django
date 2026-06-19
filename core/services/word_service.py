@@ -1,10 +1,7 @@
 import os
 import tempfile
-
+import subprocess
 from django.http import HttpResponse
-
-# New import
-from docx2pdf import convert
 
 
 def convert_word_to_pdf(file):
@@ -17,21 +14,25 @@ def convert_word_to_pdf(file):
             for chunk in file.chunks():
                 destination.write(chunk)
 
-        pdf_path = os.path.join(
-            temp_dir,
-            os.path.splitext(file.name)[0] + ".pdf"
-        )
+        try:
+            # Convert DOCX → PDF (LibreOffice)
+            subprocess.run([
+                "libreoffice",
+                "--headless",
+                "--convert-to",
+                "pdf",
+                docx_path,
+                "--outdir",
+                temp_dir
+            ], check=True, timeout=120)
 
-        # Convert DOCX to PDF using Microsoft Word (native on Windows)
-        convert(docx_path, pdf_path)
+            pdf_name = os.path.splitext(file.name)[0] + ".pdf"
+            pdf_path = os.path.join(temp_dir, pdf_name)
 
-        # Return PDF
-        with open(pdf_path, "rb") as pdf:
-            response = HttpResponse(
-                pdf.read(),
-                content_type="application/pdf"
-            )
-            response["Content-Disposition"] = (
-                f'attachment; filename="{os.path.basename(pdf_path)}"'
-            )
-            return response
+            with open(pdf_path, "rb") as pdf:
+                response = HttpResponse(pdf.read(), content_type="application/pdf")
+                response["Content-Disposition"] = f'attachment; filename="{pdf_name}"'
+                return response
+
+        except Exception as e:
+            return HttpResponse(f"Word conversion failed: {str(e)}", status=500)
