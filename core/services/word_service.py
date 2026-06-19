@@ -1,40 +1,39 @@
 import os
 import tempfile
-from django.http import HttpResponse
 from docx import Document
-from fpdf import FPDF
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+from django.http import HttpResponse
 
 
 def convert_word_to_pdf(file):
     with tempfile.TemporaryDirectory() as temp_dir:
 
         docx_path = os.path.join(temp_dir, file.name)
-        pdf_path = os.path.join(temp_dir, "output.pdf")
 
-        # Save file
+        # save file
         with open(docx_path, "wb+") as f:
             for chunk in file.chunks():
                 f.write(chunk)
 
-        try:
-            doc = Document(docx_path)
+        doc = Document(docx_path)
 
-            pdf = FPDF()
-            pdf.set_auto_page_break(auto=True, margin=15)
-            pdf.add_page()
-            pdf.set_font("Arial", size=12)
+        pdf_path = os.path.join(temp_dir, "output.pdf")
 
-            for para in doc.paragraphs:
-                text = para.text.strip()
-                if text:
-                    pdf.multi_cell(0, 10, text)
+        pdf = SimpleDocTemplate(pdf_path)
+        styles = getSampleStyleSheet()
 
-            pdf.output(pdf_path)
+        content = []
 
-            with open(pdf_path, "rb") as f:
-                response = HttpResponse(f.read(), content_type="application/pdf")
-                response["Content-Disposition"] = f'attachment; filename="{os.path.splitext(file.name)[0]}.pdf"'
-                return response
+        for p in doc.paragraphs:
+            text = p.text.strip()
+            if text:
+                content.append(Paragraph(text, styles["Normal"]))
+                content.append(Spacer(1, 10))
 
-        except Exception as e:
-            return HttpResponse(f"Word conversion failed: {str(e)}", status=500)
+        pdf.build(content)
+
+        with open(pdf_path, "rb") as f:
+            response = HttpResponse(f.read(), content_type="application/pdf")
+            response["Content-Disposition"] = 'attachment; filename="word.pdf"'
+            return response
