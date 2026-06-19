@@ -51,7 +51,7 @@ def convert_excel_to_pdf(file):
         # Return PDF
         with open(output_path, "rb") as f:
             response = HttpResponse(f.read(), content_type="application/pdf")
-            response["Content-Disposition"] = 'attachment; filename="output.pdf"'
+            response["Content-Disposition"] = 'attachment; filename="f/{file.name}.pdf"'
 
         return response
 

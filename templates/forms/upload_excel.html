@@ -1,59 +1,76 @@
-{% extends "layouts/sidebar.html" %}
+{% extends "layouts/sidebar.html" %} {% block content %}
 
-{% block content %}
+<h2 class="text-2xl font-bold mb-6">Excel To PDF</h2>
 
-<h2 class="text-2xl font-bold mb-6">Excel → PDF</h2>
+<form
+  method="post"
+  enctype="multipart/form-data"
+  class="bg-white p-6 rounded-xl shadow max-w-xl mx-auto space-y-6"
+>
+  {% csrf_token %}
 
-<form method="post" enctype="multipart/form-data"
-      class="bg-white p-6 rounded-xl shadow max-w-xl mx-auto space-y-6">
-    {% csrf_token %}
+  <!-- DROP ZONE -->
+  <label
+    for="file"
+    class="flex flex-col items-center justify-center w-full h-40 border-2 border-rounded border-gray-300 rounded-lg cursor-pointer hover:border-purple-500 hover:bg-purple-50 transition"
+  >
+    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+      <!-- ICON -->
+      <svg
+        class="w-10 h-10 mb-3 text-gray-400"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M7 16V4m0 0L3 8m4-4l4 4M17 20v-8m0 0l-4 4m4-4l4 4"
+        />
+      </svg>
 
-    <!-- DROP ZONE -->
-    <label for="file"
-        class="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-purple-500 hover:bg-purple-50 transition">
+      <p class="mb-2 text-sm text-gray-500">
+        <span class="font-semibold">Click to upload</span> or drag and drop
+      </p>
 
-        <div class="flex flex-col items-center justify-center pt-5 pb-6">
-            <!-- ICON -->
-            <svg class="w-10 h-10 mb-3 text-gray-400"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M7 16V4m0 0L3 8m4-4l4 4M17 20v-8m0 0l-4 4m4-4l4 4"/>
-            </svg>
+      <p class="text-xs text-gray-500">Excel files (.xlsx)</p>
+    </div>
 
-            <p class="mb-2 text-sm text-gray-500">
-                <span class="font-semibold">Click to upload</span> or drag and drop
-            </p>
+    <!-- FILE INPUT -->
+    <input
+      id="file"
+      name="file"
+      type="file"
+      accept=".xlsx"
+      class="hidden"
+      onchange="showFileName(this)"
+      required
+    />
+  </label>
 
-            <p class="text-xs text-gray-500">Excel files (.xlsx)</p>
-        </div>
+  <!-- FILE NAME DISPLAY -->
+  <p id="file-name" class="text-center text-sm text-gray-600 hidden"></p>
 
-        <!-- FILE INPUT -->
-        <input id="file" name="file" type="file" accept=".xlsx"
-            class="hidden" onchange="showFileName(this)" required>
-    </label>
-
-    <!-- FILE NAME DISPLAY -->
-    <p id="file-name" class="text-center text-sm text-gray-600 hidden"></p>
-
-    <!-- BUTTON -->
-    <button type="submit"
-        class="bg-purple-600 hover:bg-purple-700 text-white w-full py-2 rounded-lg font-semibold transition">
-        Convert to PDF
-    </button>
-
+  <!-- BUTTON -->
+  <button
+    type="submit"
+    class="bg-purple-600 hover:bg-purple-700 text-white w-full py-2 rounded-lg font-semibold transition"
+  >
+    Convert to PDF
+  </button>
 </form>
 
 <!-- JS FOR FILE NAME -->
 <script>
-function showFileName(input) {
+  function showFileName(input) {
     const fileName = input.files[0]?.name;
     if (fileName) {
-        const display = document.getElementById("file-name");
-        display.textContent = "Selected: " + fileName;
-        display.classList.remove("hidden");
+      const display = document.getElementById("file-name");
+      display.textContent = "Selected: " + fileName;
+      display.classList.remove("hidden");
     }
-}
+  }
 </script>
 
 {% endblock %}

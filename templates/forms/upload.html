@@ -1,100 +1,120 @@
-{% extends "layouts/sidebar.html" %}
+{% extends "layouts/sidebar.html" %} {% block content %}
 
-{% block content %}
+<h2 class="text-2xl font-bold mb-6">TXT to Excel / PDF</h2>
 
-<h2 class="text-2xl font-bold mb-6">TXT → Excel / PDF</h2>
+<form
+  method="post"
+  enctype="multipart/form-data"
+  class="bg-white p-6 rounded-xl shadow max-w-xl mx-auto space-y-6"
+>
+  {% csrf_token %}
 
-<form method="post" enctype="multipart/form-data"
-      class="bg-white p-6 rounded-xl shadow max-w-xl mx-auto space-y-6">
-    {% csrf_token %}
+  <!-- DROP ZONE -->
+  <label
+    for="file"
+    class="flex flex-col items-center justify-center w-full h-44 border-2 border-rounded border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition"
+  >
+    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+      <!-- ICON -->
+      <svg
+        class="w-10 h-10 mb-3 text-gray-400"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M7 16V4m0 0L3 8m4-4l4 4M17 20v-8m0 0l-4 4m4-4l4 4"
+        />
+      </svg>
 
-    <!-- DROP ZONE -->
-    <label for="file"
-        class="flex flex-col items-center justify-center w-full h-44 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition">
+      <p class="mb-2 text-sm text-gray-500">
+        <span class="font-semibold">Click to upload</span> or drag & drop
+      </p>
 
-        <div class="flex flex-col items-center justify-center pt-5 pb-6">
-            <!-- ICON -->
-            <svg class="w-10 h-10 mb-3 text-gray-400"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M7 16V4m0 0L3 8m4-4l4 4M17 20v-8m0 0l-4 4m4-4l4 4"/>
-            </svg>
-
-            <p class="mb-2 text-sm text-gray-500">
-                <span class="font-semibold">Click to upload</span> or drag & drop
-            </p>
-
-            <p class="text-xs text-gray-500">TXT files only (.txt)</p>
-        </div>
-
-        <input id="file" name="txt_file" type="file" accept=".txt"
-            class="hidden" onchange="showFileName(this)" required>
-    </label>
-
-    <!-- FILE NAME DISPLAY -->
-    <p id="file-name" class="text-center text-sm text-gray-600 hidden"></p>
-
-    <!-- OPTION SELECT -->
-    <div class="space-y-2">
-        <label class="block text-sm font-semibold text-gray-700">Select Option</label>
-
-        <select name="option" required
-            class="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-400">
-            
-            <option value="">Choose option</option>
-
-            <optgroup label="Excel">
-                <option value="tapin_missing">Tap In Missing</option>
-                <option value="tapin_pending">Tap In Pending</option>
-                <option value="tapout_missing">Tap Out Missing</option>
-                <option value="tapout_pending">Tap Out Pending</option>
-            </optgroup>
-
-            <optgroup label="PDF">
-                <option value="tapin_missing_pdf">Tap In Missing PDF</option>
-                <option value="tapin_pending_pdf">Tap In Pending PDF</option>
-                <option value="tapout_missing_pdf">Tap Out Missing PDF</option>
-                <option value="tapout_pending_pdf">Tap Out Pending PDF</option>
-            </optgroup>
-
-        </select>
+      <p class="text-xs text-gray-500">TXT files only (.txt)</p>
     </div>
 
-    <!-- BUTTON -->
-    <button type="submit"
-        class="bg-blue-600 hover:bg-blue-700 text-white w-full py-2 rounded-lg font-semibold transition">
-        Convert File
-    </button>
+    <input
+      id="file"
+      name="txt_file"
+      type="file"
+      accept=".txt"
+      class="hidden"
+      onchange="showFileName(this)"
+      required
+    />
+  </label>
 
+  <!-- FILE NAME DISPLAY -->
+  <p id="file-name" class="text-center text-sm text-gray-600 hidden"></p>
+
+  <!-- OPTION SELECT -->
+  <div class="space-y-2">
+    <label class="block text-sm font-semibold text-gray-700"
+      >Select Option</label
+    >
+
+    <select
+      name="option"
+      required
+      class="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-400"
+    >
+      <option value="">Choose option</option>
+
+      <optgroup label="Excel">
+        <option value="tapin_missing">Tap In Missing</option>
+        <option value="tapin_pending">Tap In Pending</option>
+        <option value="tapout_missing">Tap Out Missing</option>
+        <option value="tapout_pending">Tap Out Pending</option>
+      </optgroup>
+
+      <optgroup label="PDF">
+        <option value="tapin_missing_pdf">Tap In Missing PDF</option>
+        <option value="tapin_pending_pdf">Tap In Pending PDF</option>
+        <option value="tapout_missing_pdf">Tap Out Missing PDF</option>
+        <option value="tapout_pending_pdf">Tap Out Pending PDF</option>
+      </optgroup>
+    </select>
+  </div>
+
+  <!-- BUTTON -->
+  <button
+    type="submit"
+    class="bg-blue-600 hover:bg-blue-700 text-white w-full py-2 rounded-lg font-semibold transition"
+  >
+    Convert File
+  </button>
 </form>
 
 <!-- JS: SHOW FILE NAME -->
 <script>
-function showFileName(input) {
+  function showFileName(input) {
     const fileName = input.files[0]?.name;
     if (fileName) {
-        const display = document.getElementById("file-name");
-        display.textContent = "Selected: " + fileName;
-        display.classList.remove("hidden");
+      const display = document.getElementById("file-name");
+      display.textContent = "Selected: " + fileName;
+      display.classList.remove("hidden");
     }
-}
+  }
 </script>
 
 <!-- JS: DRAG & DROP EFFECT -->
 <script>
-const dropArea = document.querySelector("label[for='file']");
+  const dropArea = document.querySelector("label[for='file']");
 
-dropArea.addEventListener("dragover", (e) => {
+  dropArea.addEventListener("dragover", (e) => {
     e.preventDefault();
     dropArea.classList.add("border-blue-500", "bg-blue-100");
-});
+  });
 
-dropArea.addEventListener("dragleave", () => {
+  dropArea.addEventListener("dragleave", () => {
     dropArea.classList.remove("border-blue-500", "bg-blue-100");
-});
+  });
 
-dropArea.addEventListener("drop", (e) => {
+  dropArea.addEventListener("drop", (e) => {
     e.preventDefault();
     dropArea.classList.remove("border-blue-500", "bg-blue-100");
 
@@ -102,7 +122,7 @@ dropArea.addEventListener("drop", (e) => {
     input.files = e.dataTransfer.files;
 
     showFileName(input);
-});
+  });
 </script>
 
 {% endblock %}

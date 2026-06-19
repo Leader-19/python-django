@@ -1,41 +1,55 @@
 import os
 import pythoncom
 import win32com.client
-from django.http import HttpResponse
+from urllib.parse import quote
+from django.http import FileResponse
 
 
 def convert_word_to_pdf(file):
-    # IMPORTANT: initialize COM
     pythoncom.CoInitialize()
 
     try:
-        input_path = os.path.abspath(f"media/{file.name}")
-        output_path = input_path.replace(".docx", ".pdf")
+        #  Ensure media directory exists
+        media_dir = os.path.abspath("media")
+        os.makedirs(media_dir, exist_ok=True)
 
-        # save uploaded file
+        # Clean original filename (IMPORTANT)
+        original_name = os.path.basename(file.name)
+        base_name, _ = os.path.splitext(original_name)
+
+        # Safe filenames
+        input_filename = original_name
+        output_filename = f"{base_name}.pdf"
+
+        input_path = os.path.join(media_dir, input_filename)
+        output_path = os.path.join(media_dir, output_filename)
+
+        # Save uploaded file
         with open(input_path, "wb+") as f:
             for chunk in file.chunks():
                 f.write(chunk)
 
-        # open Word
+        # Open Word and convert
         word = win32com.client.DispatchEx("Word.Application")
         word.Visible = False
 
-        doc = word.Documents.Open(input_path)
+        try:
+            doc = word.Documents.Open(input_path)
+            doc.SaveAs(output_path, FileFormat=17)  # 17 = PDF
+            doc.Close()
+        finally:
+            word.Quit()
 
-        # 17 = PDF
-        doc.SaveAs(output_path, FileFormat=17)
+        # Return file with CORRECT original name
+        response = FileResponse(open(output_path, "rb"), content_type="application/pdf")
 
-        doc.Close()
-        word.Quit()
-
-        # return file
-        with open(output_path, "rb") as f:
-            response = HttpResponse(f.read(), content_type="application/pdf")
-            response["Content-Disposition"] = 'attachment; filename="output.pdf"'
+        #  CRITICAL: proper filename for ALL browsers
+        response["Content-Disposition"] = (
+            f'attachment; filename="{output_filename}"; '
+            f"filename*=UTF-8''{quote(output_filename)}"
+        )
 
         return response
 
     finally:
-        # VERY IMPORTANT: clean COM
         pythoncom.CoUninitialize()
