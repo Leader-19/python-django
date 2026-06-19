@@ -1,34 +1,37 @@
 import os
-import subprocess
+import tempfile
+
 from django.http import HttpResponse
+
+# New import
+from docx2pdf import convert
 
 
 def convert_word_to_pdf(file):
-    os.makedirs("media", exist_ok=True)
+    with tempfile.TemporaryDirectory() as temp_dir:
 
-    input_path = os.path.abspath(f"media/{file.name}")
-    output_dir = os.path.abspath("media")
+        docx_path = os.path.join(temp_dir, file.name)
 
-    # save uploaded file
-    with open(input_path, "wb+") as f:
-        for chunk in file.chunks():
-            f.write(chunk)
+        # Save uploaded file
+        with open(docx_path, "wb+") as destination:
+            for chunk in file.chunks():
+                destination.write(chunk)
 
-    # convert using LibreOffice (best Linux alternative)
-    subprocess.run([
-        "libreoffice",
-        "--headless",
-        "--convert-to",
-        "pdf",
-        "--outdir",
-        output_dir,
-        input_path
-    ], check=True)
+        pdf_path = os.path.join(
+            temp_dir,
+            os.path.splitext(file.name)[0] + ".pdf"
+        )
 
-    output_path = input_path.rsplit(".", 1)[0] + ".pdf"
+        # Convert DOCX to PDF using Microsoft Word (native on Windows)
+        convert(docx_path, pdf_path)
 
-    with open(output_path, "rb") as f:
-        response = HttpResponse(f.read(), content_type="application/pdf")
-        response["Content-Disposition"] = 'attachment; filename="output.pdf"'
-
-    return response
+        # Return PDF
+        with open(pdf_path, "rb") as pdf:
+            response = HttpResponse(
+                pdf.read(),
+                content_type="application/pdf"
+            )
+            response["Content-Disposition"] = (
+                f'attachment; filename="{os.path.basename(pdf_path)}"'
+            )
+            return response

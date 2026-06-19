@@ -4,7 +4,7 @@ Django settings for cd_parser project.
 
 from pathlib import Path
 import os
-
+import dj_database_url
 # Base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
 
