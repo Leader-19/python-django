@@ -1,13 +1,15 @@
 import os
 import tempfile
-import subprocess
+import pandas as pd
 from django.http import HttpResponse
+from weasyprint import HTML
 
 
 def convert_excel_to_pdf(file):
     with tempfile.TemporaryDirectory() as temp_dir:
 
         excel_path = os.path.join(temp_dir, file.name)
+        pdf_path = os.path.join(temp_dir, "output.pdf")
 
         # Save uploaded file
         with open(excel_path, "wb+") as destination:
@@ -15,23 +17,26 @@ def convert_excel_to_pdf(file):
                 destination.write(chunk)
 
         try:
-            # Convert XLSX → PDF (LibreOffice)
-            subprocess.run([
-                "libreoffice",
-                "--headless",
-                "--convert-to",
-                "pdf",
-                excel_path,
-                "--outdir",
-                temp_dir
-            ], check=True, timeout=120)
+            # Read Excel
+            df = pd.read_excel(excel_path)
 
-            pdf_name = os.path.splitext(file.name)[0] + ".pdf"
-            pdf_path = os.path.join(temp_dir, pdf_name)
+            # Convert to HTML table
+            html_table = df.to_html(index=False)
+
+            html_content = f"""
+            <html>
+            <body>
+            {html_table}
+            </body>
+            </html>
+            """
+
+            # Convert HTML → PDF
+            HTML(string=html_content).write_pdf(pdf_path)
 
             with open(pdf_path, "rb") as pdf:
                 response = HttpResponse(pdf.read(), content_type="application/pdf")
-                response["Content-Disposition"] = f'attachment; filename="{pdf_name}"'
+                response["Content-Disposition"] = f'attachment; filename="{os.path.splitext(file.name)[0]}.pdf"'
                 return response
 
         except Exception as e:
