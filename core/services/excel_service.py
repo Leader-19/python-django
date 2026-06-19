@@ -1,6 +1,8 @@
 import os
 import tempfile
-import subprocess
+import pandas as pd
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib import colors
 from django.http import HttpResponse
 
 
@@ -13,39 +15,30 @@ def convert_excel_to_pdf(file):
             for chunk in file.chunks():
                 f.write(chunk)
 
-        try:
-            subprocess.run([
-                "soffice",
-                "--headless",
-                "--nologo",
-                "--nolockcheck",
-                "--convert-to",
-                "pdf",
-                input_path,
-                "--outdir",
-                tmp
-            ], capture_output=True, text=True, check=True)
+        df = pd.read_excel(input_path)
 
-            pdf_file = os.path.splitext(file.name)[0] + ".pdf"
-            pdf_path = os.path.join(tmp, pdf_file)
+        pdf_path = os.path.join(tmp, "output.pdf")
+        pdf = SimpleDocTemplate(pdf_path)
 
-            with open(pdf_path, "rb") as pdf:
-                return HttpResponse(
-                    pdf.read(),
-                    content_type="application/pdf",
-                    headers={
-                        "Content-Disposition": f'attachment; filename="{pdf_file}"'
-                    }
-                )
+        data = [df.columns.tolist()] + df.values.tolist()
 
-        except FileNotFoundError:
+        table = Table(data, repeatRows=1)
+
+        style = TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+        ])
+
+        table.setStyle(style)
+
+        pdf.build([table])
+
+        with open(pdf_path, "rb") as f:
             return HttpResponse(
-                "LibreOffice not installed (soffice not found)",
-                status=500
-            )
-
-        except subprocess.CalledProcessError as e:
-            return HttpResponse(
-                f"Conversion failed: {e.stderr}",
-                status=500
+                f.read(),
+                content_type="application/pdf",
+                headers={"Content-Disposition": 'attachment; filename="excel.pdf"'}
             )

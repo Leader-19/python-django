@@ -1,6 +1,8 @@
 import os
 import tempfile
-import subprocess
+from docx import Document
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
 from django.http import HttpResponse
 
 
@@ -13,39 +15,25 @@ def convert_word_to_pdf(file):
             for chunk in file.chunks():
                 f.write(chunk)
 
-        try:
-            result = subprocess.run([
-                "soffice",
-                "--headless",
-                "--nologo",
-                "--nolockcheck",
-                "--convert-to",
-                "pdf",
-                input_path,
-                "--outdir",
-                tmp
-            ], capture_output=True, text=True, check=True)
+        doc = Document(input_path)
 
-            pdf_file = os.path.splitext(file.name)[0] + ".pdf"
-            pdf_path = os.path.join(tmp, pdf_file)
+        pdf_path = os.path.join(tmp, "output.pdf")
+        pdf = SimpleDocTemplate(pdf_path)
+        styles = getSampleStyleSheet()
 
-            with open(pdf_path, "rb") as pdf:
-                return HttpResponse(
-                    pdf.read(),
-                    content_type="application/pdf",
-                    headers={
-                        "Content-Disposition": f'attachment; filename="{pdf_file}"'
-                    }
-                )
+        content = []
 
-        except FileNotFoundError:
+        for p in doc.paragraphs:
+            text = p.text.strip()
+            if text:
+                content.append(Paragraph(text, styles["Normal"]))
+                content.append(Spacer(1, 10))
+
+        pdf.build(content)
+
+        with open(pdf_path, "rb") as f:
             return HttpResponse(
-                "LibreOffice not installed (soffice not found)",
-                status=500
-            )
-
-        except subprocess.CalledProcessError as e:
-            return HttpResponse(
-                f"Conversion failed: {e.stderr}",
-                status=500
+                f.read(),
+                content_type="application/pdf",
+                headers={"Content-Disposition": 'attachment; filename="word.pdf"'}
             )
