@@ -9,6 +9,10 @@ WORKDIR /app
 # SYSTEM DEPENDENCIES
 # =========================
 RUN apt-get update && apt-get install -y \
+    libreoffice \
+    libreoffice-writer \
+    libreoffice-calc \
+    fonts-dejavu \
     build-essential \
     libpq-dev \
     gcc \
