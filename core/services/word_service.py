@@ -2,38 +2,43 @@ import os
 import tempfile
 from django.http import HttpResponse
 from docx import Document
-from weasyprint import HTML
 
 
-def convert_word_to_pdf(file):
+def convert_word_to_html(file):
     with tempfile.TemporaryDirectory() as temp_dir:
 
         docx_path = os.path.join(temp_dir, file.name)
-        pdf_path = os.path.join(temp_dir, "output.pdf")
 
         # Save uploaded file
-        with open(docx_path, "wb+") as destination:
+        with open(docx_path, "wb+") as f:
             for chunk in file.chunks():
-                destination.write(chunk)
+                f.write(chunk)
 
         try:
-            # Read DOCX
             doc = Document(docx_path)
 
-            html_content = "<html><body>"
+            html = """
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Word Conversion</title>
+            </head>
+            <body>
+            """
 
             for para in doc.paragraphs:
-                html_content += f"<p>{para.text}</p>"
+                text = para.text.replace("\n", "<br>")
+                html += f"<p>{text}</p>"
 
-            html_content += "</body></html>"
+            html += "</body></html>"
 
-            # Convert HTML → PDF
-            HTML(string=html_content).write_pdf(pdf_path)
-
-            with open(pdf_path, "rb") as pdf:
-                response = HttpResponse(pdf.read(), content_type="application/pdf")
-                response["Content-Disposition"] = f'attachment; filename="{os.path.splitext(file.name)[0]}.pdf"'
-                return response
+            return HttpResponse(
+                html,
+                content_type="text/html",
+                headers={
+                    "Content-Disposition": f'attachment; filename="{os.path.splitext(file.name)[0]}.html"'
+                }
+            )
 
         except Exception as e:
             return HttpResponse(f"Word conversion failed: {str(e)}", status=500)
