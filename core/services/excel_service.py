@@ -9,7 +9,6 @@ def convert_excel_to_pdf(file):
 
         input_path = os.path.join(tmp, file.name)
 
-        # Save file
         with open(input_path, "wb+") as f:
             for chunk in file.chunks():
                 f.write(chunk)
@@ -25,21 +24,28 @@ def convert_excel_to_pdf(file):
                 input_path,
                 "--outdir",
                 tmp
-            ], check=True)
+            ], capture_output=True, text=True, check=True)
 
-            pdf_path = os.path.join(
-                tmp,
-                os.path.splitext(file.name)[0] + ".pdf"
-            )
+            pdf_file = os.path.splitext(file.name)[0] + ".pdf"
+            pdf_path = os.path.join(tmp, pdf_file)
 
             with open(pdf_path, "rb") as pdf:
                 return HttpResponse(
                     pdf.read(),
                     content_type="application/pdf",
                     headers={
-                        "Content-Disposition": f'attachment; filename="excel.pdf"'
+                        "Content-Disposition": f'attachment; filename="{pdf_file}"'
                     }
                 )
 
-        except Exception as e:
-            return HttpResponse(f"Excel conversion failed: {str(e)}", status=500)
+        except FileNotFoundError:
+            return HttpResponse(
+                "LibreOffice not installed (soffice not found)",
+                status=500
+            )
+
+        except subprocess.CalledProcessError as e:
+            return HttpResponse(
+                f"Conversion failed: {e.stderr}",
+                status=500
+            )
