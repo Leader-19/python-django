@@ -14,8 +14,7 @@ SECRET_KEY = 'django-insecure-9yknsk6(l^r79kx5^5#e+s-ip#6q9vh1^18*nlj35-t5&s@$ky
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# ALLOWED_HOSTS = ['python-django-mvbi.onrender.com', 'localhost', '127.0.0.1']
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 INSTALLED_APPS = [
@@ -75,6 +74,14 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
+import dj_database_url
+import os
+
+DATABASES = {
+    'default': dj_database_url.config(
+        default=f"sqlite:///{os.path.join(BASE_DIR, 'db.sqlite3')}"
+    )
+}
 
 # Internationalization
 LANGUAGE_CODE = 'en-us'
@@ -84,7 +91,13 @@ USE_TZ = True
 
 # Static files
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'  
+STATICFILES_DIRS = [BASE_DIR / 'static']  # ✅ ADDED
+# STATIC_ROOT = BASE_DIR / 'staticfiles'   # ✅ ADDED
+# STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [
+    BASE_DIR / "static"
+]
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
