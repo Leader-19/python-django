@@ -13,6 +13,8 @@ RUN apt-get update && apt-get install -y \
     libreoffice-writer \
     libreoffice-calc \
     fonts-dejavu \
+    fonts-liberation \
+    fonts-noto-cjk \
     build-essential \
     libpq-dev \
     gcc \
@@ -24,7 +26,6 @@ RUN apt-get update && apt-get install -y \
 # PYTHON DEPENDENCIES
 # =========================
 COPY requirements.txt .
-
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -33,9 +34,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # =========================
 COPY . .
 
-# =========================
-# STATIC FILES
-# =========================
 RUN python manage.py collectstatic --noinput || true
 
 EXPOSE 8000
