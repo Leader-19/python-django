@@ -15,7 +15,7 @@ def convert_excel_to_pdf(file):
 
         try:
             subprocess.run([
-                "libreoffice",   # ✅ FIX (not just "soffice")
+                "soffice",   # or "libreoffice"
                 "--headless",
                 "--nologo",
                 "--nolockcheck",
