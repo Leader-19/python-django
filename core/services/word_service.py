@@ -2,14 +2,16 @@ import os
 import tempfile
 from django.http import HttpResponse
 from docx import Document
+from fpdf import FPDF
 
 
-def convert_word_to_html(file):
+def convert_word_to_pdf(file):
     with tempfile.TemporaryDirectory() as temp_dir:
 
         docx_path = os.path.join(temp_dir, file.name)
+        pdf_path = os.path.join(temp_dir, "output.pdf")
 
-        # Save uploaded file
+        # Save file
         with open(docx_path, "wb+") as f:
             for chunk in file.chunks():
                 f.write(chunk)
@@ -17,28 +19,22 @@ def convert_word_to_html(file):
         try:
             doc = Document(docx_path)
 
-            html = """
-            <html>
-            <head>
-                <meta charset="utf-8">
-                <title>Word Conversion</title>
-            </head>
-            <body>
-            """
+            pdf = FPDF()
+            pdf.set_auto_page_break(auto=True, margin=15)
+            pdf.add_page()
+            pdf.set_font("Arial", size=12)
 
             for para in doc.paragraphs:
-                text = para.text.replace("\n", "<br>")
-                html += f"<p>{text}</p>"
+                text = para.text.strip()
+                if text:
+                    pdf.multi_cell(0, 10, text)
 
-            html += "</body></html>"
+            pdf.output(pdf_path)
 
-            return HttpResponse(
-                html,
-                content_type="text/html",
-                headers={
-                    "Content-Disposition": f'attachment; filename="{os.path.splitext(file.name)[0]}.html"'
-                }
-            )
+            with open(pdf_path, "rb") as f:
+                response = HttpResponse(f.read(), content_type="application/pdf")
+                response["Content-Disposition"] = f'attachment; filename="{os.path.splitext(file.name)[0]}.pdf"'
+                return response
 
         except Exception as e:
             return HttpResponse(f"Word conversion failed: {str(e)}", status=500)
