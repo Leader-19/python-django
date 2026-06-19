@@ -1,41 +1,45 @@
 import os
 import tempfile
-import pandas as pd
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
-from reportlab.lib import colors
+import subprocess
 from django.http import HttpResponse
 
 
 def convert_excel_to_pdf(file):
-    with tempfile.TemporaryDirectory() as temp_dir:
+    with tempfile.TemporaryDirectory() as tmp:
 
-        excel_path = os.path.join(temp_dir, file.name)
+        input_path = os.path.join(tmp, file.name)
 
-        # save file
-        with open(excel_path, "wb+") as f:
+        # Save file
+        with open(input_path, "wb+") as f:
             for chunk in file.chunks():
                 f.write(chunk)
 
-        df = pd.read_excel(excel_path)
+        try:
+            subprocess.run([
+                "soffice",
+                "--headless",
+                "--nologo",
+                "--nolockcheck",
+                "--convert-to",
+                "pdf",
+                input_path,
+                "--outdir",
+                tmp
+            ], check=True)
 
-        pdf_path = os.path.join(temp_dir, "output.pdf")
-        pdf = SimpleDocTemplate(pdf_path)
+            pdf_path = os.path.join(
+                tmp,
+                os.path.splitext(file.name)[0] + ".pdf"
+            )
 
-        data = [df.columns.tolist()] + df.values.tolist()
+            with open(pdf_path, "rb") as pdf:
+                return HttpResponse(
+                    pdf.read(),
+                    content_type="application/pdf",
+                    headers={
+                        "Content-Disposition": f'attachment; filename="excel.pdf"'
+                    }
+                )
 
-        table = Table(data)
-
-        style = TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
-            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-            ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
-        ])
-
-        table.setStyle(style)
-
-        pdf.build([table])
-
-        with open(pdf_path, "rb") as f:
-            response = HttpResponse(f.read(), content_type="application/pdf")
-            response["Content-Disposition"] = 'attachment; filename="excel.pdf"'
-            return response
+        except Exception as e:
+            return HttpResponse(f"Excel conversion failed: {str(e)}", status=500)

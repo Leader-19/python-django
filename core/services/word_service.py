@@ -1,39 +1,45 @@
 import os
 import tempfile
-from docx import Document
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet
+import subprocess
 from django.http import HttpResponse
 
 
 def convert_word_to_pdf(file):
-    with tempfile.TemporaryDirectory() as temp_dir:
+    with tempfile.TemporaryDirectory() as tmp:
 
-        docx_path = os.path.join(temp_dir, file.name)
+        input_path = os.path.join(tmp, file.name)
 
-        # save file
-        with open(docx_path, "wb+") as f:
+        # Save file
+        with open(input_path, "wb+") as f:
             for chunk in file.chunks():
                 f.write(chunk)
 
-        doc = Document(docx_path)
+        try:
+            subprocess.run([
+                "soffice",
+                "--headless",
+                "--nologo",
+                "--nolockcheck",
+                "--convert-to",
+                "pdf",
+                input_path,
+                "--outdir",
+                tmp
+            ], check=True)
 
-        pdf_path = os.path.join(temp_dir, "output.pdf")
+            pdf_path = os.path.join(
+                tmp,
+                os.path.splitext(file.name)[0] + ".pdf"
+            )
 
-        pdf = SimpleDocTemplate(pdf_path)
-        styles = getSampleStyleSheet()
+            with open(pdf_path, "rb") as pdf:
+                return HttpResponse(
+                    pdf.read(),
+                    content_type="application/pdf",
+                    headers={
+                        "Content-Disposition": f'attachment; filename="word.pdf"'
+                    }
+                )
 
-        content = []
-
-        for p in doc.paragraphs:
-            text = p.text.strip()
-            if text:
-                content.append(Paragraph(text, styles["Normal"]))
-                content.append(Spacer(1, 10))
-
-        pdf.build(content)
-
-        with open(pdf_path, "rb") as f:
-            response = HttpResponse(f.read(), content_type="application/pdf")
-            response["Content-Disposition"] = 'attachment; filename="word.pdf"'
-            return response
+        except Exception as e:
+            return HttpResponse(f"Word conversion failed: {str(e)}", status=500)
